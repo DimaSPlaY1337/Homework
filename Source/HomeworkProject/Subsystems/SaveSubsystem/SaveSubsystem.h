@@ -1,0 +1,56 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Subsystems/GameInstanceSubsystem.h"
+#include "SaveData.h"
+#include "SaveSubsystem.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class HOMEWORKPROJECT_API USaveSubsystem : public UGameInstanceSubsystem
+{
+	GENERATED_BODY()
+
+public:
+	const FGameSaveData& GetGameSaveData() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Save Subsystem")
+	void SaveGame();
+
+	UFUNCTION(BlueprintCallable, Category = "Save Subsystem")
+	void LoadLastGame();
+
+	UFUNCTION(BlueprintCallable, Category = "Save Subsystem")
+	void LoadGame(int32 SaveId);
+
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+
+	void SerializeLevel(const ULevel* Level, const ULevelStreaming* StreamingLevel = nullptr);//метод записи
+	void DeserializeLevel(ULevel* Level, const ULevelStreaming* StreamingLevel = nullptr);
+
+private:
+	void SerializeGame();
+	void DeserializeGame();
+	void WriteSaveToFile();
+	void LoadSaveFromFile(int32 SaveId);
+	void OnPostLoadMapWithWorld(UWorld* LoadedWorld);
+	void DeserializeActor(AActor* Actor, const FActorSaveData* ActorSaveData);
+	FString GetSaveFilePath(int32 SaveId) const;
+	int32 GetNextSaveId() const;
+	void OnActorSpawned(AActor* SpawnedActor);
+	void NotifyActorsAndComponents(AActor* Actor);
+
+	FGameSaveData GameSaveData;//данные сохранения. Область памяти для чтения и записи
+	FString SaveDirectoryName;//имя директории сохранения
+	TArray<int32> SaveIds;//индитификаторы сохранений
+	FDelegateHandle OnActorSpawnedDelegateHandle;//вызывается в тот момент когда эктор добавился в мир
+
+	bool bUseCompressedSaves = false;//сжаты сохранения или нет
+	/** Used to avoid double @OnLevelDeserialized invocation */
+	bool bIgnoreOnActorSpawnedCallback = false;//для выключения части десериализации для только что заспавненных экторов
+};

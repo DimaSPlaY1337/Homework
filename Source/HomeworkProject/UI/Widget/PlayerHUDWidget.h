@@ -1,0 +1,47 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
+#include "ReticleWidget.h"
+#include "HighlightInteractable.h"
+#include "PlayerHUDWidget.generated.h"
+
+/**
+ *
+ */
+UCLASS()
+class HOMEWORKPROJECT_API UPlayerHUDWidget : public UUserWidget
+{
+	GENERATED_BODY()
+
+public:
+	class UReticleWidget* GetReticleWidget();
+
+	class UAmmoWidget* GetAmmoWidget();
+
+	class UWidgetCharacterAttributes* GetWidgetCharacterAttributes(EAttributesType Type);
+
+	void SetHighlightInteractableVisibility(bool bIsVisible);
+	void SetHighlightInteractableActionText(FName KeyName);
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget names")
+	FName ReticleWidgetName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget names")
+	FName AmmoWidgetName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget names")
+	FName HealthWidgetName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget names")
+	FName OxygenWidgetName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget names")
+	FName StaminaWidgetName;
+
+	UPROPERTY(meta = (BindWidget))
+	UHighlightInteractable* InteractableKey;
+};
