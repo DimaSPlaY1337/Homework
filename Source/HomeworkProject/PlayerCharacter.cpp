@@ -13,6 +13,7 @@
 #include "Camera/CameraComponent.h"
 #include "Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h"
 #include "Animation/AnimInstance.h"
+#include "Subsystems/Streaming/StreamingSubsystemUtils.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer)
@@ -38,6 +39,12 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer) 
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	/* огда персонаж по€вл€етс€ в мире(например, после загрузки уровн€ или спауна), может случитьс€, что он уже стоит внутри какого - то стримингового объЄма.
+	Unreal Engine сам не вызовет OnOverlapBegin в таком случае, потому что оверлап уже произошЄл Удо того, как началс€ PlayФ.
+
+	„тобы не пропустить этот случай, вручную провер€етс€, не зашЄл ли персонаж в какие - то объЄмы на момент старта, и дл€ них вызываетс€ обработчик входа(HandleCharacterOverlapBegin).
+	»наче логика загрузки / выгрузки стриминговых уровней Ч или люба€ друга€ на Overlap Ч не сработает.*/
+	UStreamingSubsystemUtils::CheckCharacterOverlapStreamingSubsystemVolume(this);
 	if (IsValid(AimCurve))
 	{
 		FOnTimelineFloatStatic AimTimelineUpdate;

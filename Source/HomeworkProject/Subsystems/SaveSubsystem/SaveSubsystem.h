@@ -10,6 +10,7 @@
 /**
  * 
  */
+class UStreamingLevelObserver;
 UCLASS()
 class HOMEWORKPROJECT_API USaveSubsystem : public UGameInstanceSubsystem
 {
@@ -30,10 +31,14 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
+	virtual UWorld* GetWorld() const override;
 	void SerializeLevel(const ULevel* Level, const ULevelStreaming* StreamingLevel = nullptr);//метод записи
 	void DeserializeLevel(ULevel* Level, const ULevelStreaming* StreamingLevel = nullptr);
 
 private:
+	void CreateStreamingLevelObservers(UWorld* World);
+	void RemoveStreamingLevelObservers();
+
 	void SerializeGame();
 	void DeserializeGame();
 	void WriteSaveToFile();
@@ -44,6 +49,9 @@ private:
 	int32 GetNextSaveId() const;
 	void OnActorSpawned(AActor* SpawnedActor);
 	void NotifyActorsAndComponents(AActor* Actor);
+
+	UPROPERTY(Transient)
+	TArray<UStreamingLevelObserver*> StreamingLevelObservers;
 
 	FGameSaveData GameSaveData;//данные сохранения. Область памяти для чтения и записи
 	FString SaveDirectoryName;//имя директории сохранения

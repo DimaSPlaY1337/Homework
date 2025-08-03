@@ -100,7 +100,8 @@ public:
 	virtual bool Serialize(FArchive& Archive) override;
 
 	FName LevelName;
-	FLevelSaveData Level;
+	FLevelSaveData PersistentLevel;
+	TArray<FLevelSaveData> StreamingLevels;//подуровни PersistentLevel
 	FObjectSaveData GameInstance;
 	FTransform StartTransform;
 

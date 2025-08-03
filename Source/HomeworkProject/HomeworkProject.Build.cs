@@ -17,8 +17,9 @@ public class HomeworkProject : ModuleRules
         "GameplayTasks",
         "NavigationSystem",
         "OnlineSubsystem",
-        "OnlineSubsystemUtils"//добавляем модули
-		});
+        "OnlineSubsystemUtils",//добавляем модули
+        "SignificanceManager"
+        });
 
         //добавляем динамически подключаем модуль, с помощью добавления в массив строки "OnlineSubsystemSteam"
         DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");//таким образом подключаем сетевой модуль для тестирования

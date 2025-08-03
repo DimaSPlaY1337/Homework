@@ -23,6 +23,7 @@ public:
 
 	void SetIgnoreCameraPitch(bool bIgnoreCameraPitch_In);
 
+	virtual void Tick(float DeltaSeconds) override;
 
 protected:
 	virtual void SetupInputComponent() override;

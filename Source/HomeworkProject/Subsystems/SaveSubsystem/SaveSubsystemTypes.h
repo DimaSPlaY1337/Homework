@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "SaveData.h"
+#include "SaveSubsystemTypes.generated.h"//из-за uobject дрбавляем это
 
 DECLARE_LOG_CATEGORY_EXTERN(LogSaveSubsystem, Log, All);
 const FName FileExtensionSave = TEXT("save");
@@ -41,4 +43,32 @@ public:
 private:
 	bool& bValue;
 	bool bInitialValue;
+};
+
+class USaveSubsystem;
+class ULevelStreaming;
+UCLASS()//наблюдатель подписанный на события загрузки или выгрузкии streaminglevels
+//и при необходимости будет сериализовать или десериализовать уровни
+class UStreamingLevelObserver : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	UStreamingLevelObserver();
+
+	void Initialize(USaveSubsystem* InSaveSubsystem, ULevelStreaming* InStreamingLevel);
+	void Deinitialize();
+
+	virtual void Serialize(FArchive& Archive) override;
+
+private:
+	UFUNCTION()
+	void OnLevelShown();
+
+	UFUNCTION()
+	void OnLevelHidden();
+
+	FLevelSaveData LevelSaveData;//сохраненная информация о уровне
+	TWeakObjectPtr<USaveSubsystem> SaveSubsystem;
+	TWeakObjectPtr<ULevelStreaming> StreamingLevel;
 };

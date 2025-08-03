@@ -22,6 +22,7 @@
 #include "Actors/Interactive/Interface/Interactive.h"
 #include "Components/WidgetComponent.h"
 #include "UI/Widget/World/GCAttributeProgressBar.h"
+#include "C:/MyProject/ue4/UE_4.26/Engine/Plugins/Runtime/SignificanceManager/Source/SignificanceManager/Public/SignificanceManager.h"
 
 
 AGCBaseCharacter::AGCBaseCharacter(const FObjectInitializer& ObjectInitializer)
@@ -54,6 +55,35 @@ void AGCBaseCharacter::BeginPlay()
 	CharacterAttributesComponent->OutOfStamina.AddUObject(GetBaseCharacterMovementComponent(), &UGCBaseCharacterMovementComponent::SetIsOutOfStamina);
 
 	InitializeHealthProgress();
+
+	if (bIsSignificantEnabled)
+	{
+		USignificanceManager* SignificanceManager = FSignificanceManagerModule::Get(GetWorld());
+		if (IsValid(SignificanceManager))
+		{
+			SignificanceManager->RegisterObject(
+				this,//указатель на объект, который мы регистрируем
+				SignificanceTagCharacter,//тэг позвол€ющий индентифицировать объект среди всего
+				//«апоминает функцию вычислени€ значимости Ч вы передаЄте функцию, 
+				// рассчитывающую float-значение значимости объекта в зависимости 
+				// от его свойств и положени€ относительно текущих точек обзора (ViewPoint).
+				[this](USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& ViewPoint) -> float//возвр float
+				{
+					return SignificanceFunction(ObjectInfo, ViewPoint);
+				},
+				//“ип пост-обработки (EPostSignificanceType): Sequential Ч функции вызываютс€ по пор€дку, 
+				// что не требует потокобезопасности; Concurrent Ч могут работать параллельно
+				USignificanceManager::EPostSignificanceType::Sequential,
+				//«апоминает функцию пост-обработки Ч эту функцию Significance Manager вызывает 
+				// после очередной оценки значимости, чтобы, например, изменить состо€ние или 
+				// детализацию объекта.
+				[this](USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSignificance, float Significance, bool bFinal)
+				{
+					PostSignificanceFunction(ObjectInfo, OldSignificance, Significance, bFinal);
+				}
+			);
+		}
+	}
 }
 
 void AGCBaseCharacter::EndPlay(const EEndPlayReason::Type Reason)
@@ -691,6 +721,122 @@ void AGCBaseCharacter::TraceLineOfSight()
 	}
 }
 
+float AGCBaseCharacter::SignificanceFunction(USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& ViewPoint)
+{
+	if (ObjectInfo->GetTag() == SignificanceTagCharacter)
+	{
+		AGCBaseCharacter* Character = StaticCast<AGCBaseCharacter*>(ObjectInfo->GetObject());
+		if (!IsValid(Character))
+		{
+			return 0.0f;//????
+		}
+		if (Character->IsPlayerControlled() && Character->IsLocallyControlled())
+		{
+			return SignificanceValueVeryHigh;
+		}
+
+		float DistToSquared = FVector::DistSquared(Character->GetActorLocation(), ViewPoint.GetLocation());
+		if (DistToSquared <= FMath::Square(VeryHighSignificanceDistance))
+		{
+			return SignificanceValueVeryHigh;
+		}
+		else if (DistToSquared <= FMath::Square(HighSignificanceDistance))
+		{
+			return SignificanceValueHigh;
+		}
+		else if (DistToSquared <= FMath::Square(MediumSignificanceDistance))
+		{
+			return SignificanceValueMedium;
+		}
+		else if (DistToSquared <= FMath::Square(LowSignificanceDistance))
+		{
+			return SignificanceValueLow;
+		}
+		else
+		{
+			return SignificanceValueVeryLow;
+		}
+	}
+	return VeryHighSignificanceDistance;
+}
+
+void AGCBaseCharacter::PostSignificanceFunction(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSignificance, float Significance, bool bFinal)
+{
+	if (OldSignificance == Significance)
+	{
+		return;
+	}
+	if (ObjectInfo->GetTag() != SignificanceTagCharacter)
+	{
+		return;
+	}
+
+	AGCBaseCharacter* Character = StaticCast<AGCBaseCharacter*>(ObjectInfo->GetObject());
+	if (!IsValid(Character))
+	{
+		return;
+	}
+
+	UCharacterMovementComponent* MovementComponent = Character->GetCharacterMovement();
+	AAIController* AIController = Character->GetController<AAIController>();
+
+	if (Significance == SignificanceValueVeryHigh)
+	{
+		MovementComponent->SetComponentTickInterval(0.0f);
+		Character->GetMesh()->SetComponentTickEnabled(true);
+		Character->GetMesh()->SetComponentTickInterval(0.0f);//замедл€ем обновдение меш AI
+		if (IsValid(AIController))
+		{
+			AIController->SetActorTickInterval(0.0f);
+
+		}
+	}
+	else if (Significance == SignificanceValueHigh)
+	{
+		MovementComponent->SetComponentTickInterval(0.0f);
+		Character->GetMesh()->SetComponentTickEnabled(true);
+		Character->GetMesh()->SetComponentTickInterval(0.05f);//замедл€ем обновдение меш AI
+		if (IsValid(AIController))
+		{
+			AIController->SetActorTickInterval(0.0f);
+
+		}
+	}
+	else if (Significance == SignificanceValueMedium)
+	{
+		MovementComponent->SetComponentTickInterval(0.1f);
+		Character->GetMesh()->SetComponentTickEnabled(true);
+		Character->GetMesh()->SetComponentTickInterval(0.1f);//замедл€ем обновдение меш AI
+		if (IsValid(AIController))
+		{
+			AIController->SetActorTickInterval(0.1f);
+
+		}
+	}
+	else if (Significance == SignificanceValueLow)
+	{
+		MovementComponent->SetComponentTickInterval(1.0f);
+		Character->GetMesh()->SetComponentTickEnabled(true);
+		Character->GetMesh()->SetComponentTickInterval(1.0f);//замедл€ем обновдение меш AI
+		if (IsValid(AIController))
+		{
+			AIController->SetActorTickInterval(1.1f);
+
+		}
+	}
+	else if (Significance == SignificanceValueVeryLow)
+	{
+		MovementComponent->SetComponentTickInterval(5.0f);
+		Character->GetMesh()->SetComponentTickEnabled(false);
+		if (IsValid(AIController))
+		{
+			AIController->SetActorTickInterval(10.0f);
+
+		}
+	}
+
+}
+
 void AGCBaseCharacter::TryChangeSprintState(float DeltaTime)
 {
 	if (bIsSprintRequested && !GCBaseCharacterMovementComponent->IsSprinting() && CanSprint() && !GCBaseCharacterMovementComponent->IsProning())
@@ -703,6 +849,8 @@ void AGCBaseCharacter::TryChangeSprintState(float DeltaTime)
 		GCBaseCharacterMovementComponent->StopSprint();
 		OnSprintEnd();
 	}
+
+	
 }
 
 const FMantlingSettings& AGCBaseCharacter::GetMantlingSettings(float LedgeHeight) const

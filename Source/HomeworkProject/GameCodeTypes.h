@@ -34,6 +34,14 @@ const FName BB_IsThrowing = FName("IsThrowing");
 
 const FName ActionInteract = FName("ActionInteract");
 
+const FName SignificanceTagCharacter = FName("Character");
+
+const float SignificanceValueVeryHigh = 0.0f;
+const float SignificanceValueHigh = 1.0f;
+const float SignificanceValueMedium = 10.0f;
+const float SignificanceValueLow = 100.0f;
+const float SignificanceValueVeryLow = 1000.0f;
+
 UENUM(BlueprintType)
 enum class EEquippedItemType : uint8
 {

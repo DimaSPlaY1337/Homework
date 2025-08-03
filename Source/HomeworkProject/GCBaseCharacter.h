@@ -14,6 +14,7 @@
 #include "Inventory/Items/InventoryItem.h"
 #include "Components/CharacterComponents/CharacterInventoryComponent.h"
 #include "Subsystems/SaveSubsystem/SaveSubsystemInterface.h"
+#include "SignificanceManager.h"
 #include "GCBaseCharacter.generated.h"
 
 DECLARE_DELEGATE_OneParam(FOnInteractableObjectFound, FName);
@@ -295,7 +296,25 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Character | Components")
 	UWidgetComponent* HealthBarProgressComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Significance")
+	float bIsSignificantEnabled = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Significance")
+	float VeryHighSignificanceDistance = 1000.0f;//все объекты которые будут ближе чем 1000.0f юнитов будут иметь очень высокую значимость
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Significance")
+	float HighSignificanceDistance = 1500.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Significance")
+	float MediumSignificanceDistance = 3000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Significance")
+	float LowSignificanceDistance = 6000.0f;
+
 private:
+	float SignificanceFunction(USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& ViewPoint);
+	void PostSignificanceFunction(USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSignificance, float Significance, bool bFinal);
+
 	void TryChangeSprintState(float DeltaTime);
 
 	bool bIsSprintRequested = false;

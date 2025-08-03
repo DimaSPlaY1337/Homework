@@ -70,6 +70,8 @@ void UWeaponBarellComponent::BeginPlay()
 
 void UWeaponBarellComponent::ShotInternal(const TArray<FShotInfo>& ShotsInfo)
 {
+	//TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("UWeaponBarellComponent::ShotInternal"));
+	SCOPED_NAMED_EVENT(UWeaponBarellComponen_ShotInternal, FColor::Red);
 	//ShotInternal גûחûגאועסÿ םא סונגונו
 	if (GetOwner()->HasAuthority())
 	{
@@ -81,6 +83,7 @@ void UWeaponBarellComponent::ShotInternal(const TArray<FShotInfo>& ShotsInfo)
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MuzzleFlashFX, MuzzleLocation, GetComponentRotation());
 	for (const FShotInfo& ShotInfo : ShotsInfo)
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("UWeaponBarellComponent::ShotInternal ShotInfo"));
 		FVector ShotStart = ShotInfo.GetLocation();
 		FVector ShotDirection = ShotInfo.GetDirection();
 		FVector ShotEnd = ShotStart + FiringRange * ShotDirection;

@@ -15,6 +15,7 @@
 #include "GameCodeTypes.h"
 #include "GameFramework/PlayerInput.h"
 #include "Subsystems/SaveSubsystem/SaveSubsystem.h"
+#include "SignificanceManager.h"
 
 void AGCPlayerController::SetPawn(APawn* InPawn)
 {
@@ -36,6 +37,21 @@ bool AGCPlayerController::GetIgnoreCameraPitch() const
 void AGCPlayerController::SetIgnoreCameraPitch(bool bIgnoreCameraPitch_In)
 {
 	bIgnoreCameraPitch = bIgnoreCameraPitch_In;
+}
+
+void AGCPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	USignificanceManager* SignificanceManager = FSignificanceManagerModule::Get(GetWorld());
+	if (IsValid(SignificanceManager))
+	{
+		FVector ViewLocation;
+		FRotator ViewRotation;
+		GetPlayerViewPoint(ViewLocation, ViewRotation);
+		FTransform ViewTransform(ViewRotation, ViewLocation);
+		TArray<FTransform> ViewPoints = { ViewTransform };
+		SignificanceManager->Update(ViewPoints);
+	}
 }
 
 void AGCPlayerController::SetupInputComponent()
